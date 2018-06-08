@@ -1,0 +1,25 @@
+{
+  "name": "fullstack4",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "watch": "nodemon index.js",
+    "lint": "eslint ."
+  },
+  "author": "KaisaS",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.4",
+    "dotenv": "^6.0.0",
+    "express": "^4.16.3",
+    "mongoose": "^5.1.4",
+    "morgan": "^1.9.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "nodemon": "^1.17.5"
+  }
+}
