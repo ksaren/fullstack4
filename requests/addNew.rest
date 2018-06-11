@@ -1,0 +1,8 @@
+POST http://localhost:3003/api/blogs/
+Content-Type: application/json
+
+{
+  "title": "Where I come from, part 2.",
+  "author": "Just Me",
+  "url": "some URL",
+  "likes": 4}
