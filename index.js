@@ -8,8 +8,8 @@ const mongoose = require('mongoose')
 const middleware = require('./utils/middleware')
 
 if ( process.env.NODE_ENV !== 'production' ) {
-    require('dotenv').config()
-  }
+  require('dotenv').config()
+}
 
 mongoose
   .connect(process.env.MONGODB_URI)
