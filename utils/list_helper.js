@@ -16,14 +16,35 @@ const favoriteBlog = (blogs) => {
   return formatBlog(favorite)
 }
 
-const mostBlogs = (blogs) => {
-  let authors = {}
-  blogs.forEach(blog => {authors[blog.author] += 1})
-  authors.sortByValue()
-  return authors.first
+const mostBlogs = function  (bloglist) {
+  let authors = []
+  bloglist.forEach((blog) => {
+    const auth = authors.find(a => a.author === blog.author)
+    if (auth) {
+      auth.blogs += 1
+    } else {
+      authors.push({ author: blog.author, blogs: 1 })
+    }
+  })
+  if (authors.length === 0) return {}
+  authors.sort((a,b) => b.blogs - a.blogs)
+  return authors[0]
 }
 
-
+const mostLikes = function  (bloglist) {
+  let authorLikes = []
+  bloglist.forEach((blog) => {
+    const auth = authorLikes.find(a => a.author === blog.author)
+    if (auth) {
+      auth.likes += blog.likes
+    } else {
+      authorLikes.push({ author: blog.author, likes: blog.likes })
+    }
+  })
+  if (authorLikes.length === 0) return {}
+  authorLikes.sort((a,b) => b.likes - a.likes)
+  return authorLikes[0]
+}
 
 //helper function
 const formatBlog = (blog) => {
@@ -39,7 +60,8 @@ module.exports = {
   totalLikes,
   favoriteBlog,
   formatBlog,
-  mostBlogs
+  mostBlogs,
+  mostLikes,
 }
 
 //examples
