@@ -49,9 +49,11 @@ const mostLikes = function  (bloglist) {
 //helper function
 const formatBlog = (blog) => {
   return {
+    id: blog._id,
     title: blog.title,
     author: blog.author,
-    likes: blog.likes
+    likes: blog.likes,
+    url: blog.url
   }
 }
 
@@ -63,21 +65,3 @@ module.exports = {
   mostBlogs,
   mostLikes,
 }
-
-//examples
-// const palindrom = (string) => {
-//     return string.split('').reverse().join('')
-//   }
-
-//   const average = (array) => {
-//     const reducer = (sum, item) => {
-//       return sum + item
-//     }
-
-//     return array.reduce(reducer, 0) / array.length
-//   }
-
-//   module.exports = {
-//     palindrom,
-//     average
-//   }

@@ -84,7 +84,6 @@ describe('Author with most blogs', () => {
 
   test('of list having some blogs is correctly selected', () => {
     const result = listHelper.mostBlogs(sampleList)
-    console.log(result)
     expect(result).toEqual({
       author: 'Robert C. Martin',
       blogs: 3
@@ -119,7 +118,6 @@ describe('Author with most likes', () => {
 
   test('of list having some blogs is correctly selected', () => {
     const result = listHelper.mostLikes(sampleList)
-    console.log(result)
     expect(result).toEqual({
       author: 'Edsger W. Dijkstra',
       likes: 17
