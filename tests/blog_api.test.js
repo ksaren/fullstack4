@@ -80,6 +80,97 @@ describe('Blog POST API, ', () => {
     expect(response.body.length).toBe(blogsBeforeAddition.length + 1)
     expect(titles).toContain('Unit testing using Jest')
   })
+
+  test('a blog without title can not be added ', async () => {
+
+    const blogsBeforeAddition = await blogsInDb()
+
+    const newBlog = {
+      author: 'B. Wisser',
+      url: 'http://blog/tooGood/toBeTrue',
+      likes: 0,
+    }
+    await api.post('/api/blogs').send(newBlog).expect(400)
+
+    const response = await api
+      .get('/api/blogs')
+
+    expect(response.body.length).toBe(blogsBeforeAddition.length)
+    
+  })
+
+  test('a blog without url can not be added ', async () => {
+
+    const blogsBeforeAddition = await blogsInDb()
+
+    const newBlog = {
+      author: 'B. Wisser',
+      title: 'Unit testing using Jest',
+      likes: 0,
+    }
+    await api.post('/api/blogs').send(newBlog).expect(400)
+
+    const response = await api
+      .get('/api/blogs')
+
+    expect(response.body.length).toBe(blogsBeforeAddition.length)
+  })
+
+  test('a blog without author can be added ', async () => {
+
+    const blogsBeforeAddition = await blogsInDb()
+
+    const newBlog = {
+      title: 'Unit testing using Jest',
+      likes: 0,
+      url: 'http://blog/tooGood/toBeTrue',
+    }
+    await api.post('/api/blogs').send(newBlog).expect(200)
+
+    const response = await api
+      .get('/api/blogs')
+
+    const authors = response.body.map(r => r.author)
+
+    expect(response.body.length).toBe(blogsBeforeAddition.length + 1)
+    expect(authors).toContain(undefined)
+  })
+  test('a blog without likes can be added and is get default value 0 ', async () => {
+
+    const newBlog = {
+      author: 'B. Wisser',
+      title: 'Unit testing using Jest',
+      url: 'http://blog/tooGood/toBeTrue',
+    }
+
+    const savedBlog = (await api.post('/api/blogs').send(newBlog).expect(200)).body
+
+    const response = await api
+      .get(`/api/blogs/${savedBlog.id}`)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    expect(response.body.likes).toBe(0)
+  })
+
+  test('a blog with preset likes can be added and gets right value', async () => {
+
+    const newBlog = {
+      author: 'B. Wisser',
+      title: 'Unit testing using Jest',
+      url: 'http://blog/tooGood/toBeTrue',
+      likes: 6,
+    }
+
+    const savedBlog = (await api.post('/api/blogs').send(newBlog).expect(200)).body
+
+    const response = await api
+      .get(`/api/blogs/${savedBlog.id}`)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    expect(response.body.likes).toBe(6)
+  })
 })
 
 afterAll(() => {

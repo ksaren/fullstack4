@@ -49,7 +49,7 @@ const mostLikes = function  (bloglist) {
 //helper function
 const formatBlog = (blog) => {
   return {
-    id: blog._id,
+    id: blog._id || undefined,
     title: blog.title,
     author: blog.author,
     likes: blog.likes,

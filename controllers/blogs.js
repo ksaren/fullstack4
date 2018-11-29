@@ -45,16 +45,16 @@ blogsRouter.delete('/:id', async (request, response) => {
 blogsRouter.post('/', async (request, response) => {
   try {
     const { title, author, url, likes } = request.body
-    if (!title || !author ) {
-      return response.status(400).json({ error: 'title or author missing' }).end()
+    if (!title || !url ) {
+      return response.status(400).json({ error: 'title or url missing' }).end()
     }
-    const blog = new Blog({
+    const blog1 = new Blog({
       title,
       likes: likes === undefined ? 0 : likes,
       author,
       url,
     })
-    const result = await blog.save()
+    const result = await blog1.save()
     response.json(formatBlog(result)).end()
   } catch(exception) {
     response.status(400).end()
