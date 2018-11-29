@@ -173,8 +173,104 @@ describe('Blog POST API, ', () => {
   })
 })
 
+describe('Blog DELETE API, ', () => {
+
+  beforeEach(async () => {
+    await seedBlogs()
+  })
+
+  test('DELETE /api/blogs/:id succeeds with proper statuscode', async () => {
+    const blogsBeforeDeletion = await blogsInDb()
+
+    const blogToBeRemoved = blogsBeforeDeletion[0]
+
+    await api
+      .delete(`/api/blogs/${blogToBeRemoved.id}`)
+      .expect(204)
+
+    const blogsAfterDeletion = await blogsInDb()
+
+    const titles = blogsAfterDeletion.map(b => b.title)
+
+    expect(titles).not.toContain(blogToBeRemoved.title)
+    expect(blogsAfterDeletion.length).toBe(blogsBeforeDeletion.length - 1)
+  })
+
+  test('DELETE /api/blogs/:id with nonexisting id fails with proper statuscode', async () => {
+    const blogsBeforeDeletion = await blogsInDb()
+
+    await api
+      .delete(`/api/blogs/${nonExistingId}`)
+      .expect(400)
+
+    const blogsAfterDeletion = await blogsInDb()
+    expect(blogsAfterDeletion.length).toBe(blogsBeforeDeletion.length)
+  })
+})
+
+describe('Blog PUT API, ', () => {
+
+  beforeEach(async () => {
+    await seedBlogs()
+  })
+
+  test('PUT /api/blogs/:id updates blog\'s single field', async () => {
+
+    const newBlog = {
+      author: 'B. Wisser',
+      title: 'Unit testing using Jest',
+      url: 'http://blog/tooGood/toBeTrue',
+      likes: 6,
+    }
+
+    const savedBlog = (await api.post('/api/blogs').send(newBlog).expect(200)).body
+    const oldAuthor = savedBlog.author
+    const newAuthor = 'C. Wisser'
+
+    const blogsBeforeUpdate = await blogsInDb()
+
+    await api.put(`/api/blogs/${savedBlog.id}`).send({ author: newAuthor }).expect(200)
+
+    const blogsAfterUpdate = await blogsInDb()
+
+    const authors = blogsAfterUpdate.map(b => b.author)
+
+    expect(authors).not.toContain(oldAuthor)
+    expect(authors).toContain(newAuthor)
+    expect(blogsAfterUpdate.length).toBe(blogsBeforeUpdate.length)
+  })
+
+  test('PUT /api/blogs/:id with nonexisting id fails with proper statuscode', async () => {
+    await api
+      .put(`/api/blogs/${nonExistingId}`).send({ title: 'Impossible Change' })
+      .expect(400)
+
+    const blogsAfterUpdate = await blogsInDb()
+
+    const titles = blogsAfterUpdate.map(b => b.title)
+
+    expect(titles).not.toContain('Impossible Change')
+  })
+
+  test('PUT /api/blogs/:id updates blog\'s likes', async () => {
+
+    const newBlog = {
+      author: 'B. Wisser',
+      title: 'Unit testing using Jest',
+      url: 'http://blog/tooGood/toBeTrue',
+      likes: 6,
+    }
+
+    const savedBlog = (await api.post('/api/blogs').send(newBlog).expect(200)).body
+    const oldLikes = savedBlog.likes
+    await api.put(`/api/blogs/${savedBlog.id}`).send({ likes: oldLikes + 1 }).expect(200)
+
+    const newLikes = (await api.get(`/api/blogs/${savedBlog.id}`).expect(200)).body.likes
+
+    expect(oldLikes).toBe(newLikes - 1)
+  })
+})
+
 afterAll(() => {
   server.close()
 })
-
-
