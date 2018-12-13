@@ -1,19 +1,86 @@
 const supertest = require('supertest')
 const { app, server } = require('../index')
 const api = supertest(app)
-const { initialBlogs, seedBlogs, blogsInDb, nonExistingId } = require('./test_helper')
+const { seed, seedBlogs, seedUser, blogsInDb, usersInDb, nonExistingId } = require('./test_helper')
+
+describe.only('USER api - when there is initially one user at db', async () => {
+
+  beforeEach(async () => await seedUser())
+
+  test('POST /api/users succeeds with a fresh username', async () => {
+    const usersBeforeOperation = await usersInDb()
+
+    const newUser = {
+      username: 'mluukkai',
+      name: 'Matti Luukkainen',
+      password: 'salainen'
+    }
+
+    await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    const usersAfterOperation = await usersInDb()
+    expect(usersAfterOperation.length).toBe(usersBeforeOperation.length+1)
+    const usernames = usersAfterOperation.map(u => u.username)
+    expect(usernames).toContain(newUser.username)
+  })
+
+  test('POST /api/users fails with reserved username', async () => {
+    const usersBeforeOperation = await usersInDb()
+
+    const newUser = {
+      username: usersBeforeOperation[0].username,
+      name: 'Matti Luukkainen',
+      password: 'salainen'
+    }
+
+    await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    const usersAfterOperation = await usersInDb()
+    expect(usersAfterOperation.length).toBe(usersBeforeOperation.length)
+  })
+
+  test('POST /api/users fails with too short password', async () => {
+    const usersBeforeOperation = await usersInDb()
+
+    const newUser = {
+      username: 'mluukkai',
+      name: 'Matti Luukkainen',
+      password: 'sa'
+    }
+
+    await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    const usersAfterOperation = await usersInDb()
+    expect(usersAfterOperation.length).toBe(usersBeforeOperation.length)
+  })
+})
+
 
 
 describe('Blog GET API, ', () => {
 
-  beforeEach(async () => await seedBlogs())
+  beforeEach(async () => {
+    await seed()
+  })
 
   test('blogs are returned as json', async () => {
     const result = await api.get('/api/blogs').expect(200)
     expect(result.type).toBe('application/json')
   })
 
-  test('all notes are returned as json by GET /api/blogs', async () => {
+  test('all blogs are returned as json by GET /api/blogs', async () => {
     const blogsInDatabase = await blogsInDb()
 
     const response = await api.get('/api/blogs').expect(200)
@@ -27,7 +94,7 @@ describe('Blog GET API, ', () => {
     })
   })
 
-  test('individual notes are returned as json by GET /api/blogs/:id', async () => {
+  test('individual blogs are returned as json by GET /api/blogs/:id', async () => {
     const blogsInDatabase = await blogsInDb()
     const oneBlog = blogsInDatabase[0]
 
@@ -58,17 +125,22 @@ describe('Blog GET API, ', () => {
 })
 
 describe('Blog POST API, ', () => {
-  beforeEach(async () => await seedBlogs())
+
+  beforeEach(async () => {
+    await seed()
+  })
 
   test('a valid blog can be added ', async () => {
 
     const blogsBeforeAddition = await blogsInDb()
+    const u1 = (await usersInDb())[0]
 
     const newBlog = {
       title: 'Unit testing using Jest',
       author: 'B. Wisser',
       url: 'http://blog/tooGood/toBeTrue',
       likes: 0,
+      userId: u1.id
     }
     await api.post('/api/blogs').send(newBlog)
 
@@ -84,11 +156,13 @@ describe('Blog POST API, ', () => {
   test('a blog without title can not be added ', async () => {
 
     const blogsBeforeAddition = await blogsInDb()
+    const u1 = (await usersInDb())[0]
 
     const newBlog = {
       author: 'B. Wisser',
       url: 'http://blog/tooGood/toBeTrue',
       likes: 0,
+      userId: u1.id
     }
     await api.post('/api/blogs').send(newBlog).expect(400)
 
@@ -96,17 +170,19 @@ describe('Blog POST API, ', () => {
       .get('/api/blogs')
 
     expect(response.body.length).toBe(blogsBeforeAddition.length)
-    
+
   })
 
   test('a blog without url can not be added ', async () => {
 
     const blogsBeforeAddition = await blogsInDb()
+    const u1 = (await usersInDb())[0]
 
     const newBlog = {
       author: 'B. Wisser',
       title: 'Unit testing using Jest',
       likes: 0,
+      userId: u1.id,
     }
     await api.post('/api/blogs').send(newBlog).expect(400)
 
@@ -119,11 +195,13 @@ describe('Blog POST API, ', () => {
   test('a blog without author can be added ', async () => {
 
     const blogsBeforeAddition = await blogsInDb()
+    const u1 = (await usersInDb())[0]
 
     const newBlog = {
       title: 'Unit testing using Jest',
       likes: 0,
       url: 'http://blog/tooGood/toBeTrue',
+      userId: u1.id
     }
     await api.post('/api/blogs').send(newBlog).expect(200)
 
@@ -137,10 +215,13 @@ describe('Blog POST API, ', () => {
   })
   test('a blog without likes can be added and is get default value 0 ', async () => {
 
+    const u1 = (await usersInDb())[0]
+
     const newBlog = {
       author: 'B. Wisser',
       title: 'Unit testing using Jest',
       url: 'http://blog/tooGood/toBeTrue',
+      userId: u1.id
     }
 
     const savedBlog = (await api.post('/api/blogs').send(newBlog).expect(200)).body
@@ -155,11 +236,14 @@ describe('Blog POST API, ', () => {
 
   test('a blog with preset likes can be added and gets right value', async () => {
 
+    const u1 = (await usersInDb())[0]
+
     const newBlog = {
       author: 'B. Wisser',
       title: 'Unit testing using Jest',
       url: 'http://blog/tooGood/toBeTrue',
       likes: 6,
+      userId: u1.id
     }
 
     const savedBlog = (await api.post('/api/blogs').send(newBlog).expect(200)).body
@@ -176,7 +260,7 @@ describe('Blog POST API, ', () => {
 describe('Blog DELETE API, ', () => {
 
   beforeEach(async () => {
-    await seedBlogs()
+    await seed()
   })
 
   test('DELETE /api/blogs/:id succeeds with proper statuscode', async () => {
@@ -211,16 +295,20 @@ describe('Blog DELETE API, ', () => {
 describe('Blog PUT API, ', () => {
 
   beforeEach(async () => {
-    await seedBlogs()
+    const u = await seedUser()
+    await seedBlogs(u)
   })
 
   test('PUT /api/blogs/:id updates blog\'s single field', async () => {
+
+    const u1 = (await usersInDb())[0]
 
     const newBlog = {
       author: 'B. Wisser',
       title: 'Unit testing using Jest',
       url: 'http://blog/tooGood/toBeTrue',
       likes: 6,
+      userId: u1.id,
     }
 
     const savedBlog = (await api.post('/api/blogs').send(newBlog).expect(200)).body
@@ -254,11 +342,14 @@ describe('Blog PUT API, ', () => {
 
   test('PUT /api/blogs/:id updates blog\'s likes', async () => {
 
+    const u1 = (await usersInDb())[0]
+
     const newBlog = {
       author: 'B. Wisser',
       title: 'Unit testing using Jest',
       url: 'http://blog/tooGood/toBeTrue',
       likes: 6,
+      userId: u1.id
     }
 
     const savedBlog = (await api.post('/api/blogs').send(newBlog).expect(200)).body

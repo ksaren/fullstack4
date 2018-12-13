@@ -1,5 +1,6 @@
 const listHelper = require('../utils/list_helper')
 const sampleList = require('../utils/sample_list')
+const Blog = require('../models/blog')
 
 describe('total likes', () => {
   const listWithOneBlog = [
@@ -43,7 +44,7 @@ describe('favorite blog', () => {
 
   test('is returned even if list has only one blog', () => {
     const result = listHelper.favoriteBlog(listWithOneBlog)
-    expect(result).toEqual(listHelper.formatBlog(listWithOneBlog[0]))
+    expect(result).toEqual(Blog.format(listWithOneBlog[0]))
   })
 
   test('of empty list equals {}', () => {
@@ -53,7 +54,7 @@ describe('favorite blog', () => {
 
   test('of list having some blogs is correctly selected', () => {
     const result = listHelper.favoriteBlog(sampleList)
-    expect(result).toEqual(listHelper.formatBlog(sampleList[2]))
+    expect(result).toEqual(Blog.format(sampleList[2]))
   })
 })
 

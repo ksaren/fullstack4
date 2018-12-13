@@ -1,3 +1,5 @@
+const Blog = require('../models/blog')
+
 const dummy = () => {
   return 1*1
 }
@@ -13,7 +15,7 @@ const totalLikes = (blogs) => {
 
 const favoriteBlog = (blogs) => {
   const favorite = blogs.reduce((prev, current) => (prev.likes > current.likes) ? prev : current, {})
-  return formatBlog(favorite)
+  return Blog.format(favorite)
 }
 
 const mostBlogs = function  (bloglist) {
@@ -46,22 +48,11 @@ const mostLikes = function  (bloglist) {
   return authorLikes[0]
 }
 
-//helper function
-const formatBlog = (blog) => {
-  return {
-    id: blog._id || undefined,
-    title: blog.title,
-    author: blog.author,
-    likes: blog.likes,
-    url: blog.url
-  }
-}
 
 module.exports = {
   dummy,
   totalLikes,
   favoriteBlog,
-  formatBlog,
   mostBlogs,
   mostLikes,
 }
