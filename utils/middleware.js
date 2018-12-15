@@ -1,3 +1,4 @@
+
 const logger = (request, response, next) => {
   if ( process.env.NODE_ENV === 'test' ) {
     return next()
@@ -14,7 +15,17 @@ const error = (request, response) => {
   response.status(404).send({ error: 'unknown endpoint' })
 }
 
+const tokenExtractor = (request, response, next) => {
+  const authorization = request.get('authorization')
+  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+    response.token = authorization.substring(7)
+    return next()
+  }
+  return response.status(401).json({ error: 'token missing or invalid' })
+}
+
 module.exports = {
   logger,
-  error
+  error,
+  tokenExtractor
 }

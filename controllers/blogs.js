@@ -3,14 +3,6 @@ const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
 const User = require('../models/user')
 
-const getTokenFrom = (request) => {
-  const authorization = request.get('authorization')
-  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
-    return authorization.substring(7)
-  }
-  return null
-}
-
 blogsRouter.get('/', async (request, response) => {
   try {
     const allBlogs = await Blog.find({}).populate('user', { username: 1, name: 1 } )
@@ -43,13 +35,23 @@ blogsRouter.get('/:id', async (request, response) => {
 
 blogsRouter.delete('/:id', async (request, response) => {
   try {
-    // const remBlog = await Blog.findById(request.params.id)
-    // if (!remBlog) {
-    //   return response.status(404).end()
-    // }
-    // await Blog.remove(remBlog)
-    await Blog.findByIdAndRemove(request.params.id)
-    response.status(204).end()
+    const decodedToken = jwt.verify(request.token, process.env.SECRET)
+
+    if (!decodedToken.id) {
+      return response.status(401).json({ error: 'invalid token' })
+    }
+
+    const userid = (await User.findById(decodedToken.id)).id
+    const remBlog = await Blog.findById(request.params.id)
+    if (!remBlog) {
+      return response.status(404).end()
+    }
+    if (remBlog.user.toString() === userid.toString()) {
+      await Blog.remove(remBlog)
+      return response.status(204).end()
+    }
+    return response.status(401).json({ error: 'authentication error' })
+    // await Blog.findByIdAndRemove(request.params.id)
   }
   catch(exception) {
     response.status(400).end()
@@ -63,27 +65,20 @@ blogsRouter.post('/', async (request, response) => {
     author,
     url,
     likes,
-    userId,
-    content,
   } = request.body
 
 
   try {
-    const token = getTokenFrom(request)
-    const decodedToken = jwt.verify(token, process.env.SECRET)
+    const decodedToken = jwt.verify(request.token, process.env.SECRET)
 
-    if (!token || !decodedToken.id) {
-      return response.status(401).json({ error: 'token missing or invalid' })
-    }
-
-    if (content === undefined) {
-      return response.status(400).json({ error: 'content missing' })
+    if (!decodedToken.id) {
+      return response.status(401).json({ error: 'invalid token' })
     }
 
     const user = await User.findById(decodedToken.id)
 
 
-    if (!title || !url ) {
+    if (!user || !title || !url ) {
       return response.status(400).json({ error: 'title or url missing' }).end()
     }
 

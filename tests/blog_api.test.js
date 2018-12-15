@@ -124,6 +124,7 @@ describe('Blog GET API, ', () => {
 
 })
 
+// doesn't work before fixing tests after adding token-based user
 describe('Blog POST API, ', () => {
 
   beforeEach(async () => {
